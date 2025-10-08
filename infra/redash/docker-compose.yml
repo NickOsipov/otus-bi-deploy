@@ -1,0 +1,103 @@
+services:
+  redash-postgres:
+    image: postgres:13-alpine
+    container_name: redash-postgres
+    environment:
+      - POSTGRES_DB=redash
+      - POSTGRES_USER=redash
+      - POSTGRES_PASSWORD=redash
+    volumes:
+      - redash_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redash"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redash-create-db:
+    image: redash/redash:latest
+    container_name: redash-create-db
+    environment:
+      - REDASH_DATABASE_URL=postgresql://redash:redash@redash-postgres:5432/redash
+      - REDASH_REDIS_URL=redis://redash-redis:6379/0
+      - REDASH_SECRET_KEY=${SECRET_KEY}
+      - REDASH_COOKIE_SECRET=${SECRET_KEY}
+    command: create_db
+    depends_on:
+      redash-postgres:
+        condition: service_healthy
+      redash-redis:
+        condition: service_healthy
+    restart: "no"
+
+  redash-redis:
+    image: redis:7-alpine
+    container_name: redash-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redash-server:
+    image: redash/redash:latest
+    container_name: redash-server
+    ports:
+      - "5000:5000"
+    environment:
+      - REDASH_DATABASE_URL=postgresql://redash:redash@redash-postgres:5432/redash
+      - REDASH_REDIS_URL=redis://redash-redis:6379/0
+      - REDASH_SECRET_KEY=${SECRET_KEY}
+      - REDASH_COOKIE_SECRET=${SECRET_KEY}
+      - REDASH_WEB_WORKERS=4
+      - PYTHONUNBUFFERED=0
+    command: server
+    depends_on:
+      redash-postgres:
+        condition: service_healthy
+      redash-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redash-worker:
+    image: redash/redash:latest
+    container_name: redash-worker
+    environment:
+      - REDASH_DATABASE_URL=postgresql://redash:redash@redash-postgres:5432/redash
+      - REDASH_REDIS_URL=redis://redash-redis:6379/0
+      - QUEUES=queries,scheduled_queries,celery,schemas
+      - REDASH_SECRET_KEY=${SECRET_KEY}
+      - REDASH_COOKIE_SECRET=${SECRET_KEY}
+      - WORKERS_COUNT=2
+      - PYTHONUNBUFFERED=0
+    command: scheduler
+    depends_on:
+      redash-postgres:
+        condition: service_healthy
+      redash-redis:
+        condition: service_healthy
+
+  redash-scheduler:
+    image: redash/redash:latest
+    container_name: redash-scheduler
+    environment:
+      - REDASH_DATABASE_URL=postgresql://redash:redash@redash-postgres:5432/redash
+      - REDASH_REDIS_URL=redis://redash-redis:6379/0
+      - REDASH_SECRET_KEY=${SECRET_KEY}
+      - REDASH_COOKIE_SECRET=${SECRET_KEY}
+      - QUEUES=celery
+      - WORKERS_COUNT=1
+      - PYTHONUNBUFFERED=0
+    command: worker
+    depends_on:
+      redash-postgres:
+        condition: service_healthy
+      redash-redis:
+        condition: service_healthy
+
+volumes:
+  redash_postgres_data:
