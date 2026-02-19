@@ -37,3 +37,10 @@ def ssh_connect(ctx: Context, name: str, key_path: str = "~/.ssh/yc"):
     """
     external_ip = ctx.run(f"invoke get-external-ip --name {name}", hide=True).stdout.strip()
     print(f"ssh -i {key_path} yc-user@{external_ip}")
+
+@task
+def clone_repo(ctx: Context):
+    """
+    Clone the repository on all Docker hosts.
+    """
+    ctx.run("ansible-playbook -i infra/ansible/inventory.yml infra/ansible/clone-repo.yml", pty=True)
