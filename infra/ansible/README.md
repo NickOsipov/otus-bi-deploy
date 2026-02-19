@@ -22,6 +22,12 @@ cd /home/ono/otus/de/otus-bi-deploy/infra/ansible
 ansible-playbook install-docker.yml
 ```
 
+### 2. Клонирование репозитория на все машины
+```bash
+cd /home/ono/otus/de/otus-bi-deploy/infra/ansible
+ansible-playbook clone-repo.yml
+```
+
 ### Запуск для конкретной машины
 ```bash
 ansible-playbook install-docker.yml --limit redash-vm
@@ -39,4 +45,5 @@ ansible docker_hosts -m command -a "docker --version"
 - `inventory.yml` - файл инвентаря с описанием хостов
 - `ansible.cfg` - конфигурация Ansible
 - `install-docker.yml` - playbook для установки Docker
+- `clone-repo.yml` - playbook для клонирования/обновления репозитория
 - `README.md` - этот файл с инструкциями

@@ -1,0 +1,35 @@
+---
+- name: Clone otus-bi-deploy repository on virtual machines
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  vars:
+    repo_url: https://github.com/NickOsipov/otus-bi-deploy.git
+    repo_owner: "{{ ansible_user | default('yc-user') }}"
+    repo_dest: "/home/{{ repo_owner }}/otus-bi-deploy"
+
+  tasks:
+    - name: Ensure git is installed
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Ensure repository directory exists
+      file:
+        path: "{{ repo_dest }}"
+        state: directory
+        owner: "{{ repo_owner }}"
+        group: "{{ repo_owner }}"
+        mode: '0755'
+
+    - name: Clone or update repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ repo_dest }}"
+        version: main
+        update: yes
+        force: yes
+      become_user: "{{ repo_owner }}"
