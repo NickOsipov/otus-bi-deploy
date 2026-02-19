@@ -139,7 +139,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "ansible", specifier = "==6.7.0" },
-    { name = "invoke", specifier = ">=2.2.1" },
+    { name = "invoke", specifier = "==2.2.1" },
 ]
 
 [[package]]

@@ -9,4 +9,5 @@ yc compute instance create \
     --memory 16G \
     --cores 4 \
     --zone ru-central1-a \
-    --hostname metabase
+    --hostname metabase \
+    --async
