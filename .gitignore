@@ -1,3 +1,4 @@
 inventory.yml
 .env
 buf
+.venv
